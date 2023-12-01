@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="2023/01" type="JetRunConfigurationType" folderName="2023">
+    <option name="MAIN_CLASS_NAME" value="net.mtcoster.advent.impl23.Day01" />
+    <module name="advent.main" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

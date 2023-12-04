@@ -17,3 +17,28 @@ fun <T> Sequence<T>.firstAndLast(nullOnSingle: Boolean = false): Pair<T, T>? {
 
 fun <T> Sequence<T>.firstAndLast(nullOnSingle: Boolean = false, predicate: (T) -> Boolean) =
     filter(predicate).firstAndLast(nullOnSingle)
+
+
+inline fun <T, K : Any> Sequence<T>.groupByNotNull(keySelector: (T) -> K?): Map<K, List<T>> =
+    groupByNotNullTo(LinkedHashMap(), keySelector)
+
+inline fun <T, K : Any, V> Sequence<T>.groupByNotNull(keySelector: (T) -> K?, valueTransform: (T) -> V): Map<K, List<V>> =
+    groupByNotNullTo(LinkedHashMap(), keySelector, valueTransform)
+
+inline fun <T, K : Any, M : MutableMap<in K, MutableList<T>>> Sequence<T>.groupByNotNullTo(destination: M, keySelector: (T) -> K?): M {
+    for (element in this) {
+        val key = keySelector(element) ?: continue
+        val list = destination.getOrPut(key) { ArrayList() }
+        list.add(element)
+    }
+    return destination
+}
+
+inline fun <T, K : Any, V, M : MutableMap<in K, MutableList<V>>> Sequence<T>.groupByNotNullTo(destination: M, keySelector: (T) -> K?, valueTransform: (T) -> V): M {
+    for (element in this) {
+        val key = keySelector(element) ?: continue
+        val list = destination.getOrPut(key) { ArrayList() }
+        list.add(valueTransform(element))
+    }
+    return destination
+}

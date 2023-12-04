@@ -1,65 +1,96 @@
 package net.mtcoster.advent.util
 
-import java.io.BufferedReader
-import java.util.*
+import net.mtcoster.advent.parsers.Parser
+import net.mtcoster.advent.parsers.trimmed
+import java.io.InputStream
+import java.io.Reader
 
 
-fun Int.toFixedLengthString(length: Int, padChar: Char = '0') = toString().padStart(length, padChar)
+fun Int.zeroPad(length: Int) = toString().padStart(length, '0')
+
+fun String.isMultiline() = lineSequence().take(2).count() > 1
 
 
-abstract class Day<I : Any>(@JvmField val year: Int, @JvmField val day: Int) : Runnable {
+abstract class Day<I : Any, O : Any>(
+    @JvmField val year: Int,
+    @JvmField val day: Int,
+    @JvmField val inputParser: Parser<I>,
+    @JvmField val outputParser: Parser<O>,
+) : Runnable {
     init {
         require(day in 1..25)
     }
 
-    abstract fun processInput(input: BufferedReader): I
+    abstract fun solveA(input: I): O
+    abstract fun solveB(input: I): O
 
-    abstract fun solveA(input: I): Any
-    abstract fun solveB(input: I): Any
+    private val resourceDir = "/net/mtcoster/advent/data${(year - 2000).zeroPad(2)}/"
+    private val inputFile get() = resourceDir + "input${day.zeroPad(2)}.txt"
+    private val solutionFileA get() = resourceDir + "solution${day.zeroPad(2)}a.txt"
+    private val solutionFileB get() = resourceDir + "solution${day.zeroPad(2)}b.txt"
 
-    private val inputPath get() = RESOURCE_FORMAT.format(
-        Locale.ROOT,
-        (year - 2000).toFixedLengthString(2),
-        day.toFixedLengthString(2),
-    )
+    private fun openResource(path: String) = javaClass.getResourceAsStream(path)
+    private fun <R> InputStream.useResource(error: String, block: (Reader) -> R) = use { input ->
+        try {
+            input.bufferedReader(Charsets.UTF_8).use(block)
+        } catch (e: Exception) {
+            print(error)
+            println(e)
+            throw e
+        }
+    }
+
+    private fun printSolution(name: String, solve: (I) -> O, input: I, solutionFile: String) {
+        val knownSolution = openResource(solutionFile)?.let { stream ->
+            stream.useResource("Failed to parse output: ") {
+                outputParser.trimmed().parse(it)
+            }
+        }
+
+        println("--- Solution $name ---")
+        try {
+            val solution = solve(input)
+            val solutionString = outputParser.toString(solution)
+            print(outputParser.toString(solution))
+
+            if (solutionString.isMultiline()) println()
+
+            when (knownSolution) {
+                null -> println(" – no known solution")
+                solution -> println(" – matches known solution")
+                else -> {
+                    print(" – does NOT match known solution:")
+                    val knownSolutionString = outputParser.toString(knownSolution)
+                    if (knownSolutionString.isMultiline()) {
+                        println()
+                    } else {
+                        print(" ")
+                    }
+                    println(knownSolutionString)
+                }
+            }
+        } catch (e: NotImplementedError) {
+            println("Not implemented.")
+        }
+        println()
+    }
 
     final override fun run() {
-        println("Advent of Code $year – Day ${day.toFixedLengthString(2)}")
+        println("Advent of Code $year – Day ${day.zeroPad(2)}")
 
-        val rawInput = javaClass.getResourceAsStream(inputPath)
+        val rawInput = openResource(inputFile)
         if (rawInput == null) {
             println("No input found!")
             return
         }
 
-        val input = try {
-            processInput(rawInput.bufferedReader(Charsets.UTF_8))
-        } catch (e: Exception) {
-            print("Failed to process input: ")
-            println(e)
-            throw e
+        val input = rawInput.useResource("Failed to parse input: ") {
+            inputParser.parse(it)
         }
 
         println()
 
-        println("--- Solution A ---")
-        try {
-            println(solveA(input))
-        } catch (e: NotImplementedError) {
-            println("Not implemented.")
-        }
-        println()
-
-        println("--- Solution B ---")
-        try {
-            println(solveB(input))
-        } catch (e: NotImplementedError) {
-            println("Not implemented.")
-        }
-        println()
-    }
-
-    companion object {
-        private const val RESOURCE_FORMAT = "/net/mtcoster/advent/input%s/input%s.txt"
+        printSolution("A", ::solveA, input, solutionFileA)
+        printSolution("B", ::solveB, input, solutionFileB)
     }
 }

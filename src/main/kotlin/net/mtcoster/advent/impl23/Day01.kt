@@ -1,17 +1,15 @@
 package net.mtcoster.advent.impl23
 
+import net.mtcoster.advent.parsers.IntParser
+import net.mtcoster.advent.parsers.StringParser
+import net.mtcoster.advent.parsers.lines
 import net.mtcoster.advent.util.Day
 import net.mtcoster.advent.util.findAllWithOverlap
 import net.mtcoster.advent.util.firstAndLast
 import net.mtcoster.advent.util.map
-import java.io.BufferedReader
 
-object Day01 : Day<List<String>>(2023, 1) {
-    override fun processInput(input: BufferedReader): List<String> {
-        return input.readLines()
-    }
-
-    override fun solveA(input: List<String>): Any {
+object Day01 : Day<List<String>, Int>(2023, 1, StringParser.lines(), IntParser) {
+    override fun solveA(input: List<String>): Int {
         return input.sumOf { line ->
             val (d0, d1) = checkNotNull(line.asSequence().firstAndLast { it in DIGITS }).map { it.digitToInt() }
 
@@ -19,7 +17,7 @@ object Day01 : Day<List<String>>(2023, 1) {
         }
     }
 
-    override fun solveB(input: List<String>): Any {
+    override fun solveB(input: List<String>): Int {
         return input.sumOf { line ->
             val (d0, d1) = checkNotNull(REGEX.findAllWithOverlap(line).firstAndLast()).map { it.parseDigitOrWord() }
 

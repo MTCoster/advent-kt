@@ -198,3 +198,4 @@ replay_pid*
 
 # Sorry, no inputs for you :(
 src/**/resources/**/input*
+src/**/resources/**/solution*
